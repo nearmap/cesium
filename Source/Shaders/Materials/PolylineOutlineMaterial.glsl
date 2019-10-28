@@ -18,9 +18,11 @@ czm_material czm_getMaterial(czm_materialInput materialInput)
     float d2 = abs(st.t - (0.5 + halfInteriorWidth));
     float dist = min(d1, d2);
 
-    vec4 currentColor = mix(outlineColor, color, b);
-    vec4 outColor = czm_antialias(outlineColor, color, currentColor, dist);
-    outColor = czm_gammaCorrect(outColor);
+    // vec4 currentColor = mix(outlineColor, color, b);
+    // vec4 outColor = czm_antialias(outlineColor, color, currentColor, dist);
+    // outColor = czm_gammaCorrect(outColor);
+
+    vec4 outColor = vec4(st.t, 0.0, 0.0, 1.0);
 
     material.diffuse = outColor.rgb;
     material.alpha = outColor.a;

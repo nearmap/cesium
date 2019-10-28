@@ -25,10 +25,16 @@ void main()
     v_width = width;
     v_st = st;
 
-    vec4 positionWC = getPolylineWindowCoordinates(p, prev, next, expandDir, width, usePrev, v_polylineAngle);
-    gl_Position = czm_viewportOrthographic * positionWC;
+    float depth;
+
+    vec4 positionWC = getPolylineWindowCoordinates(p, prev, next, expandDir, width, usePrev, v_polylineAngle, depth);
+    vec4 positionClip = czm_viewportOrthographic * positionWC;
+    positionClip.z = -1.0;
+    positionClip *= depth;
+    gl_Position = positionClip;
 
 #ifdef LOG_DEPTH
-    czm_vertexLogDepth(czm_modelViewProjectionRelativeToEye * p);
+    // czm_vertexLogDepth(czm_modelViewProjectionRelativeToEye * p);
+    czm_vertexLogDepth();
 #endif
 }

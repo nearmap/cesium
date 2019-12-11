@@ -141,6 +141,15 @@ import ShaderSource from '../Renderer/ShaderSource.js';
             fs.defines = defined(fs.defines) ? fs.defines.slice(0) : [];
             fs.defines.push('LOG_DEPTH');
 
+            var isPolyline = shaderProgram._vertexShaderText.includes('vec4 getPolylineWindowCoordinates');
+            var isPolygon = shaderProgram._vertexShaderText.includes('gl_Position = czm_modelViewProjectionRelativeToEye * p;');
+
+            if (isPolyline || isPolygon) {
+                if (isPolyline) console.log('found polyline');
+                if (isPolygon) console.log('found polygon');
+                fs.defines.push('OFFSET_DEPTH');
+            }
+
             var i;
             var logMain;
             var writesLogDepth = false;

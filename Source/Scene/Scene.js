@@ -2413,6 +2413,15 @@ import View from './View.js';
                 invertClassification = scene._invertClassification;
             }
 
+
+            // CARL FIX - forcing pickDepth to be updated before translucent pass,
+            // to ensure no translucent things are picked against.
+            var depthStencilTexture = passState.framebuffer.depthStencilTexture;
+            var pickDepth = scene._picking.getPickDepth(scene, index);
+            pickDepth.update(context, depthStencilTexture);
+            pickDepth.executeCopyDepth(context, passState);
+            // -----
+
             us.updatePass(Pass.TRANSLUCENT);
             commands = frustumCommands.commands[Pass.TRANSLUCENT];
             commands.length = frustumCommands.indices[Pass.TRANSLUCENT];
@@ -2420,10 +2429,12 @@ import View from './View.js';
 
             if (context.depthTexture && scene.useDepthPicking && (environmentState.useGlobeDepthFramebuffer || renderTranslucentDepthForPick)) {
                 // PERFORMANCE_IDEA: Use MRT to avoid the extra copy.
-                var depthStencilTexture = renderTranslucentDepthForPick ? passState.framebuffer.depthStencilTexture : globeDepth.framebuffer.depthStencilTexture;
-                var pickDepth = scene._picking.getPickDepth(scene, index);
-                pickDepth.update(context, depthStencilTexture);
-                pickDepth.executeCopyDepth(context, passState);
+                // CARL FIX this operation moved above
+                // var depthStencilTexture = renderTranslucentDepthForPick ? passState.framebuffer.depthStencilTexture : globeDepth.framebuffer.depthStencilTexture;
+                // var pickDepth = scene._picking.getPickDepth(scene, index);
+                // pickDepth.update(context, depthStencilTexture);
+                // pickDepth.executeCopyDepth(context, passState);
+                // -----
             }
 
             if (separatePrimitiveFramebuffer) {

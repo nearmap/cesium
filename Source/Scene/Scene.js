@@ -2058,34 +2058,13 @@ import View from './View.js';
     }
 
     // NEARMAP CHANGES BEGIN
-    function ownerZIndex (command) {
+    function ownerZIndex(command) {
         var zIndex = command.owner.zIndex;
         return zIndex === undefined ? 0 : zIndex;
     }
 
-    function isAlwaysInFrontOf (a, b) {
-        var ownerId = a.owner.alwaysInFrontOfId;
-        if (!ownerId) {
-            return false;
-        }
-        var ids = b.owner._instanceIds
-        if (!ids) {
-            return false;
-        }
-        return ids.includes(ownerId);
-    }
-
     function backToFront(a, b, position) {
-        // First check - some renderable objects are set to be always in front of a specific list of others. Eg a label
-        // collection belonging to a polygon should always be in front of the polygon.
-        if (isAlwaysInFrontOf(a, b)) {
-            return 1;
-        }
-        if (isAlwaysInFrontOf(b, a)) {
-            return -1;
-        }
-
-        // Second check - if the objects have different z indexes, the higher z index is always in front.
+        // If the objects have different z indexes, the higher z index is always in front.
         var zIndexA = ownerZIndex(a);
         var zIndexB = ownerZIndex(b);
 
@@ -2093,8 +2072,32 @@ import View from './View.js';
             return zIndexA - zIndexB;
         }
 
-        // Fallback check (and the only one Cesium does by default) - compare by distance to camera.
+        // Otherwise compare by distance, this is the comparison Cesium did before.
         return b.boundingVolume.distanceSquaredTo(position) - a.boundingVolume.distanceSquaredTo(position);
+    }
+
+    /**
+     * Takes a back-to-front sorted list of commands, iterates through to check if any commands are configured to
+     * always be on top of others (by `alwaysInFrontOfId` property) but are in the wrong order. If so, rearranges to
+     * move the appropriate commands forward (towards the back of the list)
+     */
+    function bumpAlwaysInFrontCommands(commands) {
+        var startIndex = commands.length - 1;
+        for (var i = startIndex; i >= 0; i--) {
+            var ownerId = commands[i].owner.alwaysInFrontOfId;
+            if (ownerId) {
+                for (var j = startIndex; j >= i; j--) {
+                    var ids = commands[j].owner._instanceIds
+                    if (ids && ids.includes(ownerId)) {
+                        // console.log(`command ${i} moving in front of ${j}`, commands[i].owner, commands[j].owner)
+                        var commandToMove = commands[i];
+                        commands.splice(i, 1);
+                        commands.splice(j, 0, commandToMove);
+                        break;
+                    }
+                }
+            }
+        }
     }
     // NEARMAP CHANGES END
 
@@ -2107,6 +2110,7 @@ import View from './View.js';
         var context = scene.context;
 
         mergeSort(commands, backToFront, scene.camera.positionWC);
+        bumpAlwaysInFrontCommands(commands);    // NEARMAP CHANGES ADDED LINE
 
         if (defined(invertClassification)) {
             executeFunction(invertClassification.unclassifiedCommand, scene, context, passState);

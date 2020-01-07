@@ -2057,9 +2057,46 @@ import View from './View.js';
         }
     }
 
+    // NEARMAP CHANGES BEGIN
+    const ownerZIndex = (command) => {
+        const zIndex = command.owner.zIndex;
+        return zIndex === undefined ? 0 : zIndex;
+    }
+
+    const isAlwaysInFrontOf = (a, b)=> {
+        const ownerId = a.owner.alwaysInFrontOfId;
+        if (!ownerId) {
+            return false;
+        }
+        const ids = b.owner._instanceIds
+        if (!ids) {
+            return false;
+        }
+        return ids.includes(ownerId);
+    }
+
     function backToFront(a, b, position) {
+        // First check - some renderable objects are set to be always in front of a specific list of others. Eg a label
+        // collection belonging to a polygon should always be in front of the polygon.
+        if (isAlwaysInFrontOf(a, b)) {
+            return 1;
+        }
+        if (isAlwaysInFrontOf(b, a)) {
+            return -1;
+        }
+
+        // Second check - if the objects have different z indexes, the higher z index is always in front.
+        const zIndexA = ownerZIndex(a);
+        const zIndexB = ownerZIndex(b);
+
+        if (zIndexA !== zIndexB) {
+            return zIndexA - zIndexB;
+        }
+
+        // Fallback check (and the only one Cesium does by default) - compare by distance to camera.
         return b.boundingVolume.distanceSquaredTo(position) - a.boundingVolume.distanceSquaredTo(position);
     }
+    // NEARMAP CHANGES END
 
     function frontToBack(a, b, position) {
         // When distances are equal equal favor sorting b before a. This gives render priority to commands later in the list.

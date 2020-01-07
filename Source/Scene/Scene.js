@@ -2058,17 +2058,17 @@ import View from './View.js';
     }
 
     // NEARMAP CHANGES BEGIN
-    const ownerZIndex = (command) => {
-        const zIndex = command.owner.zIndex;
+    function ownerZIndex (command) {
+        var zIndex = command.owner.zIndex;
         return zIndex === undefined ? 0 : zIndex;
     }
 
-    const isAlwaysInFrontOf = (a, b)=> {
-        const ownerId = a.owner.alwaysInFrontOfId;
+    function isAlwaysInFrontOf (a, b) {
+        var ownerId = a.owner.alwaysInFrontOfId;
         if (!ownerId) {
             return false;
         }
-        const ids = b.owner._instanceIds
+        var ids = b.owner._instanceIds
         if (!ids) {
             return false;
         }
@@ -2086,8 +2086,8 @@ import View from './View.js';
         }
 
         // Second check - if the objects have different z indexes, the higher z index is always in front.
-        const zIndexA = ownerZIndex(a);
-        const zIndexB = ownerZIndex(b);
+        var zIndexA = ownerZIndex(a);
+        var zIndexB = ownerZIndex(b);
 
         if (zIndexA !== zIndexB) {
             return zIndexA - zIndexB;
